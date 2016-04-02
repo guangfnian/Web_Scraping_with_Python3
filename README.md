@@ -4,3 +4,5 @@
 **tieba_portrait.py:**
 爬取某贴吧经验排行榜上前n页用户的头像原图
 
+**jandan_ooxx.py:**
+爬煎蛋妹子图原图
