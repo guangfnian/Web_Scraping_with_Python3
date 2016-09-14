@@ -6,3 +6,6 @@
 
 **jandan_ooxx.py:**
 爬煎蛋妹子图原图
+
+**dgtle.py:**
+数字尾巴原图
