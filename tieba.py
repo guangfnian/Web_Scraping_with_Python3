@@ -4,7 +4,7 @@ import requests
 from lxml import etree
 
 def down_load(url, cnt):
-    header = r'http://imgsrc.baidu.com/forum/pic/item/'
+    header = r'http://imgsrc.baidu.com/forum/pic/item/' # original source url header
     url = header + url.split(r'/')[-1]
     print('Getting No.%s  %s...' % (cnt, url))
     res = requests.get(url, stream = True)
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     if not os.path.exists(dir):
         os.makedirs(dir)
     os.chdir(dir)
-    results = html.xpath('//*[@id]/img[@class="BDE_Image"]/@src')
+    results = html.xpath('//*[@id]/img[@class="BDE_Image"]/@src') # find all pictures
     cnt = 1
     for pic_url in results:
         down_load(pic_url, str(cnt))
