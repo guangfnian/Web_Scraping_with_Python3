@@ -1,36 +1,41 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 '''爬煎蛋妹子图原图'''
-from urllib.request import urlopen, Request
-from bs4 import BeautifulSoup
 import os
-global cnt
-def url_open(url):
-	req = Request(url)
-	req.add_header('User-Agent','Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:36.0) Gecko/20100101 Firefox/36.0')
-	response = urlopen(req)
-	return response.read()
-def get_pic(url):
-	global cnt
-	bs = BeautifulSoup(urlopen(url).read(), 'lxml')
-	nameList = bs.findAll('a', {'class':'view_img_link'})
-	for name in nameList:
-		pic_url = name['href']
-		with open(str(cnt)+'.jpg', 'wb') as fout:
-			fout.write(url_open(pic_url))
-		cnt = cnt+1
-url = r'http://jandan.net/ooxx'
-html = urlopen(url)
-bs = BeautifulSoup(html.read(), 'lxml')
-page = int(bs.find('span', {'class':'current-comment-page'}).get_text()[1:-1])
-cnt = 1
-try:
-	os.mkdir('python_girl')
-except:
-	pass
-os.chdir('python_girl')
-for i in range(int(input('How many pages do you want?\n'))):
-	target = url+r'/page-'+str(page)+'#comments'
-	print(target)
-	get_pic(target)
-	page -= 1
+import shutil
+import requests
+from lxml import etree
+
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.91 Safari/537.36',
+}
+
+def download_pic(url, name):
+    print('getting No.%s %s' % (name, url))
+    res = requests.get(url, stream = True)
+    with open(name + '.jpg', 'wb') as fout:
+        shutil.copyfileobj(res.raw, fout)
+
+
+def prase_page(url):
+    page = requests.get(url, headers = headers)
+    html = etree.HTML(page.text)
+    pic_lists = html.xpath('//*[@id]/div[1]/div/div[2]/p/a/@href')
+    cnt = 1
+    for pic_url in pic_lists:
+        download_pic(pic_url, str(cnt))
+        cnt += 1
+
+if __name__ == '__main__':
+    url = r'http://jandan.net/ooxx'
+    page = requests.get(url, headers = headers)
+    html = etree.HTML(page.text)
+    number = int(html.xpath('//*[@id="comments"]/div[2]/div/span')[0].text[1:-1])
+    main_dir = os.path.join(os.getcwd(), 'jandan_ooxx')
+    for i in range(int(input('How many pages do you want to get?\n'))):
+        current_dir = os.path.join(main_dir, str(number))
+        if not os.path.exists(current_dir):
+            os.makedirs(current_dir)
+        os.chdir(current_dir)
+        target_url = url+r'/page-'+str(number)+'#comments'
+        print('Now getting page %s...' % target_url)
+        prase_page(target_url)
+        number -= 1
