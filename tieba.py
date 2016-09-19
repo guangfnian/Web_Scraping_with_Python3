@@ -1,33 +1,35 @@
 import os
-import shutil
 import requests
+import binascii
 from lxml import etree
 
-def parse_name(name): # 处理windows系统下非法的目录字符
-    black_list = ('\\', '/', ':', '*', '?', '"', '<', '>', '|') # 非法字符集
-    name = ' '.join(name.split())
-    name = ''.join(list(map(lambda x: '_' if x in black_list else x, name)))
-    return name
+photo_type = { # 图片格式
+    '47494638': '.gif',
+    'ffd8ffe0': '.jpg',
+    'ffd8ffe1': '.jpg',
+    'ffd8ffdb': '.jpg',
+    '89504e47': '.png'
+}
 
 def down_load(url, cnt):
-    header = r'http://imgsrc.baidu.com/forum/pic/item/' # original source url header
+    header = r'http://imgsrc.baidu.com/forum/pic/item/'
     url = header + url.split(r'/')[-1]
     print('Getting No.%s  %s...' % (cnt, url))
-    if os.path.exists(cnt + '.jpg'): # if exists, do nothing
-        return
-    res = requests.get(url, stream = True)
-    with open(cnt + '.jpg', 'wb') as fout:
-        shutil.copyfileobj(res.raw, fout)
+    res = requests.get(url, stream = True).content
+    fmt = binascii.b2a_hex(res[0:4])  # 读取前4字节转化为16进制字符串
+    ext = photo_type.get(str(fmt, 'utf-8'), '.jpg') # 默认按jpg处理
+    with open(cnt + ext, 'wb') as fout:
+        fout.write(res)
 
 if __name__ == '__main__':
     url = input('Please Input the URL...\n')
     page = requests.get(url)
     html = etree.HTML(page.text)
-    dir = os.path.join(os.getcwd(), 'tieba', parse_name(html.xpath('/html/head/title')[0].text))
+    dir = os.path.join(os.getcwd(), 'tieba', html.xpath('/html/head/title')[0].text)
     if not os.path.exists(dir):
         os.makedirs(dir)
     os.chdir(dir)
-    results = html.xpath('//*[@id]/img[@class="BDE_Image"]/@src') # find all pictures
+    results = html.xpath('//*[@id]/img[@class="BDE_Image"]/@src')
     cnt = 1
     for pic_url in results:
         down_load(pic_url, str(cnt))
